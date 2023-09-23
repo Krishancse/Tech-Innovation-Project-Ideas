@@ -1,0 +1,217 @@
+from flask import Flask, request, jsonify
+from flask_httpauth import HTTPBasicAuth
+import random
+import time
+import requests
+
+app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # Change this to a secure secret key
+auth = HTTPBasicAuth()
+
+# Define a dictionary of user credentials for demonstration purposes
+users = {
+    "user1": "password1",
+    "user2": "password2"
+}
+
+@auth.verify_password
+def verify_password(username, password):
+    if username in users and users[username] == password:
+        return username
+
+# 10. Integration with Third-Party Services (Example: Weather Forecast)
+def get_weather_forecast():
+    # You can replace this with a real weather API integration
+    response = requests.get("https://api.example.com/weather")
+    if response.status_code == 200:
+        weather_data = response.json()
+        return weather_data
+    else:
+        return None
+
+# 11. Customization (Example: User Preferences)
+user_preferences = {
+    "user1": {
+        "temperature_unit": "Fahrenheit",
+        "light_color": "White"
+    },
+    "user2": {
+        "temperature_unit": "Celsius",
+        "light_color": "Warm White"
+    }
+}
+
+@auth.login_required
+@app.route('/api/weather', methods=['GET'])
+def weather_forecast():
+    weather_data = get_weather_forecast()
+    if weather_data:
+        return jsonify(weather_data)
+    else:
+        return jsonify({'error': 'Failed to fetch weather data.'}), 500
+
+@app.route('/api/preferences', methods=['GET', 'PUT'])
+@auth.login_required
+def user_preferences_endpoint():
+    username = auth.current_user()
+    if request.method == 'GET':
+        if username in user_preferences:
+            return jsonify(user_preferences[username])
+        else:
+            return jsonify({'error': 'User preferences not found.'}), 404
+    elif request.method == 'PUT':
+        new_preferences = request.get_json()
+        user_preferences[username] = new_preferences
+        return jsonify({'message': 'Preferences updated successfully.'})
+
+# ... (Your existing code up to SmartHomeHub class)
+
+@auth.login_required
+@app.route('/api/devices', methods=['GET'])
+def get_devices():
+    devices = [{'name': device.name, 'status': device.status, 'energy_usage': device.energy_usage} for device in hub.connected_devices]
+    return jsonify(devices)
+
+@auth.login_required
+@app.route('/api/control', methods=['POST'])
+def remote_control():
+    data = request.get_json()
+    device_name = data.get('device_name')
+    action = data.get('action')
+
+    device = next((d for d in hub.connected_devices if d.name == device_name), None)
+    if device:
+        hub.control_device(device, action)
+        return jsonify({'message': f"{device_name} {action.capitalize()}d."})
+    else:
+        return jsonify({'error': f"Device '{device_name}' not found."}), 404
+
+class SmartHomeHub:
+    def __init__(self):
+        self.connected_devices = []
+        self.automation_rules = []
+
+    def add_device(self, device):
+        self.connected_devices.append(device)
+        device.set_hub(self)
+
+    def control_device(self, device, action):
+        if device in self.connected_devices:
+            if action == "turn_on":
+                device.turn_on()
+            elif action == "turn_off":
+                device.turn_off()
+            elif action == "set_temperature":
+                device.set_temperature(random.randint(65, 80))
+            elif action == "start_recording":
+                device.start_recording()
+            elif action == "stop_recording":
+                device.stop_recording()
+        else:
+            print(f"Device '{device.name}' is not connected to the hub.")
+
+    def add_automation_rule(self, rule):
+        self.automation_rules.append(rule)
+
+    def check_automation_rules(self):
+        for rule in self.automation_rules:
+            if rule.check_condition():
+                rule.execute_action()
+
+    def get_energy_usage(self):
+        total_energy_usage = sum(device.energy_usage for device in self.connected_devices)
+        return total_energy_usage
+
+class SmartDevice:
+    def __init__(self, name):
+        self.name = name
+        self.status = "off"
+        self.hub = None
+        self.energy_usage = 0  # Energy usage in kWh
+
+    def set_hub(self, hub):
+        self.hub = hub
+
+    def turn_on(self):
+        self.status = "on"
+        print(f"{self.name} turned on")
+        # Simulate energy usage increase when turned on
+        self.energy_usage += random.uniform(0.1, 0.5)
+
+    def turn_off(self):
+        self.status = "off"
+        print(f"{self.name} turned off")
+
+    def set_temperature(self, temperature):
+        pass
+
+    def start_recording(self):
+        pass
+
+    def stop_recording(self):
+        pass
+
+class Light(SmartDevice):
+    def set_temperature(self, temperature):
+        pass
+
+class Thermostat(SmartDevice):
+    def set_temperature(self, temperature):
+        print(f"{self.name} set to {temperature}°F")
+
+class SecurityCamera(SmartDevice):
+    def start_recording(self):
+        print(f"{self.name} started recording")
+
+    def stop_recording(self):
+        print(f"{self.name} stopped recording")
+
+# AutomationRule class to define automation rules
+class AutomationRule:
+    def __init__(self, condition, action):
+        self.condition = condition
+        self.action = action
+
+    def check_condition(self):
+        # Implement logic to check if the condition is met
+        return self.condition()
+
+    def execute_action(self):
+        # Implement logic to execute the action when the condition is met
+        self.action()
+
+# Example automation rule: Turn on lights when motion is detected
+def motion_detected():
+    # Implement logic to check if motion is detected
+    return random.choice([True, False])
+
+def turn_on_lights():
+    # Implement logic to turn on lights
+    hub.control_device(living_room_light, "turn_on")
+    hub.control_device(bedroom_light, "turn_on")
+
+if __name__ == "__main__":
+    hub = SmartHomeHub()
+
+    living_room_light = Light("Living Room Light")
+    bedroom_light = Light("Bedroom Light")
+    thermostat = Thermostat("Thermostat")
+    security_camera = SecurityCamera("Security Camera")
+
+    # Connect devices using different IoT protocols
+    connect_wifi(living_room_light)
+    connect_zigbee(bedroom_light)
+    connect_zwave(thermostat)
+    connect_bluetooth(security_camera)
+
+    # Add devices to the hub
+    hub.add_device(living_room_light)
+    hub.add_device(bedroom_light)
+    hub.add_device(thermostat)
+    hub.add_device(security_camera)
+
+    # Create an automation rule: Turn on lights when motion is detected
+    motion_detection_rule = AutomationRule(motion_detected, turn_on_lights)
+    hub.add_automation_rule(motion_detection_rule)
+
+    app.run(debug=True, ssl_context='adhoc')  # Enable HTTPS for encryption
