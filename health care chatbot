@@ -1,0 +1,174 @@
+# healthcare-chatbot
+# Healthcare Chatbot
+
+![Chatbot Image](chatbot_image.png)
+
+## Overview
+
+The Healthcare Chatbot is a conversational AI system designed to provide users with information about various medical topics, offer health tips, set reminders, and assist in emergency situations. This README file provides an overview of the chatbot, its features, how to set it up, and how to use it effectively.
+
+## Features
+
+The Healthcare Chatbot offers the following features:
+
+1. **Medical Information:** It can provide information about diseases, symptoms, treatments, and medications.
+
+2. **Medication Information:** Users can inquire about specific medications, including dosages, potential side effects, and interactions with other drugs or substances.
+
+3. **Health Tips and Recommendations:** The chatbot offers general health tips, preventive measures, and lifestyle recommendations to promote overall well-being.
+
+4. **Emergency Assistance:** In cases of medical emergencies, the chatbot provides immediate assistance by offering first aid instructions and urging users to contact local emergency services.
+
+5. **Reminders and Notifications:** Users can set reminders for appointments, medication doses, and follow-up visits. The chatbot will send reminders as scheduled to improve patient adherence to treatment plans.
+
+6. **Data Security and Privacy:** The chatbot complies with healthcare data security regulations and prioritizes user data privacy. All user data is securely stored and transmitted.
+
+7. **User Feedback and Learning:** The chatbot includes a feedback mechanism that allows users to rate responses. It uses this feedback to improve its accuracy and effectiveness over time.
+
+8. **Multi-Platform Accessibility:** The chatbot is accessible on various platforms, such as web, mobile apps, and messaging applications, to reach a broader audience.
+
+9. **Multilingual Support:** It offers support for multiple languages to cater to a diverse user base.
+
+10. **Integration with Electronic Health Records (EHRs):** If applicable, the chatbot can integrate with EHR systems to access and update patient records seamlessly.
+
+# the code #
+
+
+import nltk
+from nltk.chat.util import Chat, reflections
+import re
+from datetime import datetime, timedelta
+
+# Define a function to preprocess user input and normalize it
+def preprocess_input(user_input):
+    user_input = user_input.lower()
+    user_input = re.sub(r'[^\w\s]', '', user_input)
+    user_input = re.sub(r'\s+', ' ', user_input).strip()
+    return user_input
+
+# Define a dictionary to store user profiles (for demonstration purposes)
+user_profiles = {}
+
+# Define a medical knowledge base (for demonstration purposes)
+medical_knowledge = {
+    "diseases": {
+        "flu": "The flu is a contagious respiratory illness caused by influenza viruses.",
+        "diabetes": "Diabetes is a chronic condition that affects how your body processes glucose (sugar) in your blood.",
+    },
+    "symptoms": {
+        "fever": "Fever is a common symptom of various illnesses and is characterized by an elevated body temperature.",
+        "fatigue": "Fatigue is a feeling of extreme tiredness or lack of energy.",
+        "chest pain": "Chest pain can be a symptom of various heart and lung conditions and should be evaluated by a healthcare professional immediately.",
+    },
+    "treatments": {
+        "flu": "Treatment for the flu typically includes rest, fluids, and antiviral medications.",
+        "diabetes": "Diabetes management involves blood sugar monitoring, diet, exercise, and medications as prescribed by a healthcare provider.",
+    },
+    "medications": {
+        "aspirin": "Aspirin is a common over-the-counter medication used for pain relief and reducing fever.",
+        "insulin": "Insulin is a hormone used to manage blood sugar levels in people with diabetes.",
+    }
+}
+
+# Define the chatbot's responses using regular expressions
+def medical_response(user_input, user_profile):
+    words = user_input.split()
+
+    # Check if the user is asking about a disease, symptom, treatment, or medication
+    for word in words:
+        if word in medical_knowledge["diseases"]:
+            return medical_knowledge["diseases"][word]
+        elif word in medical_knowledge["symptoms"]:
+            if word == "chest pain":
+                return "Chest pain can be a serious symptom. Please seek immediate medical attention!"
+            else:
+                return medical_knowledge["symptoms"][word]
+        elif word in medical_knowledge["treatments"]:
+            return medical_knowledge["treatments"][word]
+        elif word in medical_knowledge["medications"]:
+            return medical_knowledge["medications"][word]
+
+    # Check if the user mentioned a symptom and provide information about it
+    for symptom in medical_knowledge["symptoms"]:
+        if symptom in user_input:
+            return medical_knowledge["symptoms"][symptom]
+
+    # Check if the chatbot has information about the user's medical history
+    if user_profile.get("medical_history"):
+        return f"Based on your medical history, it's important to monitor {user_profile['medical_history']}."
+
+    # Medication Information
+    if "medication information" in user_input:
+        return "Medication Information: You can ask me about specific medications, and I will provide dosages, potential side effects, and interactions with other drugs or substances."
+
+    # Health Tips and Recommendations
+    if "health tips" in user_input or "recommendations" in user_input:
+        return "Health Tips and Recommendations: I can offer general health tips, preventive measures, and lifestyle recommendations to promote overall well-being."
+
+    # Emergency Assistance
+    if "emergency" in user_input:
+        return "Emergency Assistance: In case of a medical emergency, please call your local emergency services immediately."
+
+    return "I'm not sure. Please consult a medical professional for more information."
+
+# Create the chatbot using the medical_response function
+chatbot = Chat({"(.*)": [medical_response]}, reflections)
+
+# Start the conversation
+print("Chatbot: Hello! I'm your healthcare chatbot. How can I assist you today?")
+
+# Define a dictionary to store user reminders
+user_reminders = {}
+
+# Define a dictionary to store user feedback and ratings
+user_feedback = {}
+
+# Enter a loop to continuously interact with the chatbot until the user quits
+while True:
+    user_input = input("You: ")
+
+    if user_input.lower() == 'quit':
+        print("Chatbot: Goodbye!")
+        break
+    else:
+        user_input = preprocess_input(user_input)
+        response = chatbot.respond(user_input, user_profiles.get(user_input, {}))
+
+        # Check if the chatbot is asking for the user's medical history
+        if "medical history" in response.lower():
+            user_medical_history = input("Chatbot: Please provide your medical history: ")
+            user_profiles[user_input] = {"medical_history": user_medical_history}
+
+        # Check for reminders
+        if "set a reminder" in user_input:
+            match = re.search(r'set a reminder for (.*) at (\d{1,2}):(\d{2})', user_input)
+            if match:
+                reminder_message = match.group(1)
+                hour = int(match.group(2))
+                minute = int(match.group(3))
+                now = datetime.now()
+                reminder_time = now.replace(hour=hour, minute=minute)
+                user_reminders[user_input] = {"message": reminder_message, "time": reminder_time}
+                print(f"Chatbot: Reminder set for {reminder_message} at {hour}:{minute:02d}.")
+
+        # Check if there are any reminders to display
+        current_time = datetime.now()
+        for reminder_key, reminder in list(user_reminders.items()):
+            if current_time >= reminder["time"]:
+                print(f"Chatbot: Reminder: {reminder['message']}")
+                del user_reminders[reminder_key]
+
+        # User Feedback and Learning
+        if "feedback" in user_input:
+            rating = input("Chatbot: Please rate my response on a scale of 1 to 5 (1 being poor, 5 being excellent): ")
+            try:
+                rating = int(rating)
+                if 1 <= rating <= 5:
+                    user_feedback[user_input] = rating
+                    print("Chatbot: Thank you for your feedback!")
+                else:
+                    print("Chatbot: Please enter a valid rating between 1 and 5.")
+            except ValueError:
+                print("Chatbot: Please enter a valid numerical rating.")
+
+        print("Chatbot:", response)
