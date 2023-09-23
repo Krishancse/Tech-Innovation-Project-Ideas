@@ -1,4 +1,5 @@
 # Tech-Innovation-Project-Ideas
+# Tech Innovation Project Ideas
 
 Welcome to the Tech Innovation Project Ideas repository! Here, you'll find a collection of innovative project concepts that can help you showcase your technical skills and creativity. Whether you're a developer, engineer, or tech enthusiast, these ideas cover a wide range of domains, from healthcare to entertainment, designed to inspire your next project.
 
@@ -63,3 +64,9 @@ Welcome to the Tech Innovation Project Ideas repository! Here, you'll find a col
 - **Focus:** Art, NFTs, Marketplace.
 
 Feel free to explore these project ideas, adapt them to your interests, and embark on your innovation journey. Remember to consider ethical and legal aspects relevant to your chosen project and have fun bringing your ideas to life!
+
+---
+
+## License
+
+This repository and its contents are open-source and available under the [MIT License](LICENSE). You are free to use, modify, and distribute the content for both personal and commercial purposes. However, please ensure you comply with the terms and conditions of the MIT License, which are outlined in the [LICENSE](LICENSE) file.
